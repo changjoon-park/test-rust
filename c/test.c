@@ -1,18 +1,28 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h> // Include for strcpy
 
-void array_example()
-{
-    char s1[10]; // Static array
-    s1[0] = 'A';
-    s1[1] = 'B';
-    s1[2] = '\0'; // Null-terminate for printing as a string
-
-    printf("Array s1: %s\n", s1);
-    printf("Address of s1: %p\n", (void *)s1);
-}
+struct Student {
+    char name[50];
+    char id[10];
+    int age;
+    int grades[5];
+};
 
 int main()
 {
-    array_example();
-    return 0;
+    struct Student kevin;
+    strcpy(kevin.name, "kevin park"); // Correct way to assign to char array
+    strcpy(kevin.id, "ThisisID");     // Correct way to assign to char array
+    kevin.age = 40;
+    // Correct way to assign values to an int array
+    kevin.grades[0] = 100;
+    kevin.grades[1] = 90;
+    kevin.grades[2] = 20;
+    kevin.grades[3] = 30;
+    kevin.grades[4] = 50;
+
+    printf("Age: %d\n", kevin.age);
+
+    return 1;
 }
