@@ -1,24 +1,22 @@
-struct Pair<T, U> {
-    first: T,
-    second: U,
-}
-
-impl<T, U> Pair<T, U> {
-    fn new(first: T, second: U) -> Self {
-        Pair { first, second }
-    }
-
-    fn as_tuple(&self) -> (&T, &U) {
-        (&self.first, &self.second)
-    }
-}
+use rust_part::{notify, NewsArticle, Summary, Tweet};
 
 fn main() {
-    let int_pair = Pair::new(1, 2);
+    let tweet = Tweet {
+        username: String::from("horse_ebooks"),
+        content: String::from("of course, as you probably already know, people"),
+        reply: false,
+        retweet: false,
+    };
 
-    println!("{:?}", int_pair.as_tuple());
+    let article = NewsArticle {
+        headline: String::from("Penguins win the Stanley Cup Championship!"),
+        location: String::from("Pittsburgh, PA, USA"),
+        author: String::from("Iceburgh"),
+        content: String::from(
+            "The Pittsburgh Penguins once again are the best hockey team in the NHL.",
+        ),
+    };
 
-    let mixed_pair = Pair::new("hello", 3.14);
-
-    println!("{:?}", mixed_pair.as_tuple());
+    notify(&tweet);
+    notify(&article);
 }
