@@ -1,22 +1,53 @@
-use rust_part::{notify, NewsArticle, Summary, Tweet};
+use std::io;
 
 fn main() {
-    let tweet = Tweet {
-        username: String::from("horse_ebooks"),
-        content: String::from("of course, as you probably already know, people"),
-        reply: false,
-        retweet: false,
-    };
+    println!("Simple Calculator");
 
-    let article = NewsArticle {
-        headline: String::from("Penguins win the Stanley Cup Championship!"),
-        location: String::from("Pittsburgh, PA, USA"),
-        author: String::from("Iceburgh"),
-        content: String::from(
-            "The Pittsburgh Penguins once again are the best hockey team in the NHL.",
-        ),
-    };
+    loop {
+        let mut input = String::new();
 
-    notify(&tweet);
-    notify(&article);
+        println!("Enter an expression (e.g., 5 + 3) or 'q' to quit:");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+
+        if input.trim().to_lowercase() == "q" {
+            break;
+        }
+
+        match calculate(&input) {
+            Ok(result) => println!("Result: {}", result),
+            Err(e) => println!("Error: {}", e),
+        }
+    }
+}
+
+fn calculate(input: &str) -> Result<f64, String> {
+    let parts: Vec<&str> = input.trim().split_whitespace().collect();
+
+    if parts.len() != 3 {
+        return Err("Invalid input format".to_string());
+    }
+
+    let a = parts[0]
+        .parse::<f64>()
+        .map_err(|_| "Invalid first number")?;
+    let op = parts[1];
+    let b = parts[2]
+        .parse::<f64>()
+        .map_err(|_| "Invalid second number")?;
+
+    match op {
+        "+" => Ok(a + b),
+        "-" => Ok(a - b),
+        "*" => Ok(a * b),
+        "/" => {
+            if b == 0.0 {
+                Err("Division by zero".to_string())
+            } else {
+                Ok(a / b)
+            }
+        }
+        _ => Err("Invalid operator".to_string()),
+    }
 }
