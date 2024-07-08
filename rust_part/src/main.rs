@@ -1,53 +1,25 @@
 use std::io;
 
 fn main() {
-    println!("Simple Calculator");
+    println!("Celsius to Fahrenheit");
 
     loop {
         let mut input = String::new();
 
-        println!("Enter an expression (e.g., 5 + 3) or 'q' to quit:");
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
+        io::stdin().read_line(&mut input).expect("Failed to Input");
 
-        if input.trim().to_lowercase() == "q" {
-            break;
-        }
+        let input = input.trim();
 
-        match calculate(&input) {
-            Ok(result) => println!("Result: {}", result),
-            Err(e) => println!("Error: {}", e),
+        match input.parse::<f64>() {
+            Ok(celsius) => {
+                let fahrenheit = celsius_to_fahrenheit(celsius);
+                println!("{:.1} C to {:.1} F", celsius, fahrenheit);
+            }
+            Err(_) => println!("Wrong number"),
         }
     }
 }
 
-fn calculate(input: &str) -> Result<f64, String> {
-    let parts: Vec<&str> = input.trim().split_whitespace().collect();
-
-    if parts.len() != 3 {
-        return Err("Invalid input format".to_string());
-    }
-
-    let a = parts[0]
-        .parse::<f64>()
-        .map_err(|_| "Invalid first number")?;
-    let op = parts[1];
-    let b = parts[2]
-        .parse::<f64>()
-        .map_err(|_| "Invalid second number")?;
-
-    match op {
-        "+" => Ok(a + b),
-        "-" => Ok(a - b),
-        "*" => Ok(a * b),
-        "/" => {
-            if b == 0.0 {
-                Err("Division by zero".to_string())
-            } else {
-                Ok(a / b)
-            }
-        }
-        _ => Err("Invalid operator".to_string()),
-    }
+fn celsius_to_fahrenheit(celsius: f64) -> f64 {
+    (celsius * 9.0 / 5.0) + 32.0
 }
