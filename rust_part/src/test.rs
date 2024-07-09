@@ -4,7 +4,7 @@ fn main() {
     println!("Celsius to Fahrenheit Converter");
 
     loop {
-        println!("Enter a temperature in Celsius (or 'q' to quit):");
+        println!("Enter temperatures in Celsius separated by commas (or type 'exit' to quit):");
 
         let mut input = String::new();
         io::stdin()
@@ -13,17 +13,35 @@ fn main() {
 
         let input = input.trim();
 
-        if input.to_lowercase() == "q" {
+        if input.eq_ignore_ascii_case("exit") {
             break;
         }
 
-        match input.parse::<f64>() {
-            Ok(celsius) => {
-                let fahrenheit = celsius_to_fahrenheit(celsius);
-                println!("{:.1}°C is {:.1}°F", celsius, fahrenheit);
+        let temperatures: Vec<&str> = input.split(',').collect();
+        let fahrenheit_temps: Vec<Result<f64, _>> = temperatures
+            .iter()
+            .map(|&temp| temp.trim().parse::<f64>())
+            .collect();
+
+        for result in fahrenheit_temps {
+            match result {
+                Ok(celsius) => {
+                    let fahrenheit = celsius_to_fahrenheit(celsius);
+                    println!("{:.1}°C is {:.1}°F", celsius, fahrenheit);
+                }
+                Err(_) => println!("Error: Invalid input"),
             }
-            Err(_) => println!("Please enter a valid number."),
         }
+        input
+            .split(',')
+            .map(|temp| temp.trim().parse::<f64>())
+            .for_each(|result| match result {
+                Ok(celsius) => {
+                    let fahrenheit = celsius_to_fahrenheit(celsius);
+                    println!("{:.1}°C is {:.1}°F", celsius, fahrenheit);
+                }
+                Err(_) => println!("Error: Invalid input"),
+            });
     }
 }
 
