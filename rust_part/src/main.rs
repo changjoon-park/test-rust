@@ -1,68 +1,66 @@
+use std::fmt;
 use std::io;
 
 struct Temperature {
-    celsius: f64,
+    celsius: f32,
 }
 
 impl Temperature {
-    fn new(celsius: f64) -> Self {
+    fn new(celsius: f32) -> Self {
         Self { celsius }
     }
 
-    fn from_fahrenheit(fahrenheit: f64) -> Self {
+    fn from_fahrenheit(fahrenheit: f32) -> Self {
         let celsius = (fahrenheit - 32.0) * 5.0 / 9.0;
         Self { celsius }
     }
 
-    fn to_fahrenheit(&self) -> f64 {
+    fn to_fahrenheit(&self) -> f32 {
         (self.celsius * 9.0 / 5.0) + 32.0
     }
+}
 
-    fn to_string(&self) -> String {
-        format!("{:.1}°C is {:.1}°F", self.celsius, self.to_fahrenheit())
+impl fmt::Display for Temperature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:.1}°C is {:.1}°F", self.celsius, self.to_fahrenheit())
+    }
+}
+
+fn parse_temperature(input: &str) -> Result<Temperature, String> {
+    let input = input.trim();
+    match input.chars().last() {
+        Some('C') | Some('c') => input[..input.len() - 1]
+            .trim()
+            .parse()
+            .map(Temperature::new)
+            .map_err(|_| "Invalid format for Celsius temperature".to_string()),
+        Some('F') | Some('f') => input[..input.len() - 1]
+            .trim()
+            .parse()
+            .map(Temperature::from_fahrenheit)
+            .map_err(|_| "Invalid format for Fahrenheit temperature".to_string()),
+        _ => Err("Temperature must end with 'C' or 'F'".to_string()),
     }
 }
 
 fn main() {
     println!("Temperature Converter (Celsius to Fahrenheit and vice versa)");
-
     loop {
         println!("Enter temperatures with suffix 'C' for Celsius or 'F' for Fahrenheit separated by commas (or type 'exit' to quit):");
-
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
 
-        let input = input.trim();
-
-        if input.eq_ignore_ascii_case("exit") {
+        if input.trim().eq_ignore_ascii_case("exit") {
             break;
         }
 
-        // Split the input string into parts, each part is a &str
         input
             .split(',')
-            .map(|temp| {
-                let temp = temp.trim(); // temp is a &str
-                if temp.ends_with('C') || temp.ends_with('c') {
-                    let celsius = temp[..temp.len() - 1].trim().parse::<f64>();
-                    celsius
-                        .map(Temperature::new)
-                        .map_err(|_| "Invalid format".to_string())
-                } else if temp.ends_with('F') || temp.ends_with('f') {
-                    let fahrenheit = temp[..temp.len() - 1].trim().parse::<f64>();
-                    fahrenheit
-                        .map(Temperature::from_fahrenheit)
-                        .map_err(|_| "Invalid format".to_string())
-                } else {
-                    Err("Invalid format".to_string())
-                }
-            })
-            .for_each(|result| match result {
-                Ok(temp) => {
-                    println!("{}", temp.to_string());
-                }
+            .map(str::trim)
+            .for_each(|temp_str| match parse_temperature(temp_str) {
+                Ok(temp) => println!("{}", temp),
                 Err(err) => println!("Error: {}", err),
             });
     }
