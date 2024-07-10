@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::io;
 
@@ -56,12 +57,61 @@ fn main() {
             break;
         }
 
-        input
+        let temperatures = input
             .split(',')
             .map(str::trim)
-            .for_each(|temp_str| match parse_temperature(temp_str) {
-                Ok(temp) => println!("{}", temp),
-                Err(err) => println!("Error: {}", err),
-            });
+            .filter_map(|temp_str| match parse_temperature(temp_str) {
+                Ok(temp) => Some(temp),
+                Err(err) => {
+                    println!("Error: {} for input '{}'", err, temp_str);
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        if temperatures.is_empty() {
+            println!("No valid temperatures entered.");
+            continue;
+        }
+
+        // Print all valid temperatures
+        println!("Valid temperatures:");
+        temperatures.iter().for_each(|temp| println!("{}", temp));
+
+        // Calculate and print average Celsius temperature
+        let avg_celsius: f32 =
+            temperatures.iter().map(|t| t.celsius).sum::<f32>() / temperatures.len() as f32;
+        println!("Average temperature: {:.1}°C", avg_celsius);
+
+        // Find and print the highest and lowest temperatures
+        if let (Some(min), Some(max)) = (
+            temperatures
+                .iter()
+                .min_by(|a, b| a.celsius.partial_cmp(&b.celsius).unwrap()),
+            temperatures
+                .iter()
+                .max_by(|a, b| a.celsius.partial_cmp(&b.celsius).unwrap()),
+        ) {
+            println!("Lowest temperature: {}", min);
+            println!("Highest temperature: {}", max);
+        }
+
+        // Group temperatures by scale
+        let grouped = temperatures.iter().fold(HashMap::new(), |mut acc, temp| {
+            acc.entry(if temp.to_fahrenheit() == temp.celsius {
+                "Celsius"
+            } else {
+                "Fahrenheit"
+            })
+            .or_insert_with(Vec::new)
+            .push(temp);
+            acc
+        });
+
+        // Print grouped temperatures
+        for (scale, temps) in grouped.iter() {
+            println!("{} temperatures:", scale);
+            temps.iter().for_each(|t| println!("  {}", t));
+        }
     }
 }
