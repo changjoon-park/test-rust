@@ -14,6 +14,17 @@ impl Person {
             age: self.age * 2,
         }
     }
+
+    fn celebrate_birthday(self) -> Self {
+        Person {
+            name: self.name,
+            age: self.age + 1,
+        }
+    }
+}
+
+fn parse_age(age_str: &str) -> Result<u32, String> {
+    age_str.parse().map_err(|_| "Invalid age".to_string())
 }
 
 fn find_person(id: u32) -> Option<Person> {
@@ -25,7 +36,39 @@ fn find_person(id: u32) -> Option<Person> {
 }
 
 fn main() {
-    // Case 1: map with method name
+    // Result::map() examples
+    println!("- Result::map() examples:");
+
+    // Using map with a method name
+    let person_result = parse_age("30")
+        .map(|age| Person::new("Bob".to_string(), age))
+        .map(Person::double_age);
+
+    match person_result {
+        Ok(person) => println!(
+            "Person with doubled age: {} is {} years old",
+            person.name, person.age
+        ),
+        Err(e) => println!("Error: {}", e),
+    }
+
+    // Using map with a closure
+    let person_result = parse_age("25")
+        .map(|age| Person::new("Charlie".to_string(), age))
+        .map(|p| p.celebrate_birthday());
+
+    match person_result {
+        Ok(person) => println!(
+            "Person after birthday: {} is {} years old",
+            person.name, person.age
+        ),
+        Err(e) => println!("Error: {}", e),
+    }
+
+    // Option::map() examples
+    println!("\n- Option::map() examples:");
+
+    // Using map with a method name
     let doubled_age_person = find_person(1).map(Person::double_age);
 
     match doubled_age_person {
@@ -36,7 +79,7 @@ fn main() {
         None => println!("Person not found"),
     }
 
-    // Case 2: map with closure
+    // Using map with a closure
     let older_person = find_person(1).map(|p| Person::new(p.name, p.age + 5));
 
     match older_person {
@@ -44,7 +87,7 @@ fn main() {
         None => println!("Person not found"),
     }
 
-    // Case 3: map on None
+    // Demonstrating map on None
     let not_found = find_person(2).map(Person::double_age);
 
     match not_found {
