@@ -7,6 +7,25 @@ struct Account {
     is_active: bool,
 }
 
+impl Account {
+    fn new(id: u32, balance: f64, is_active: bool) -> Self {
+        Self {
+            id,
+            balance,
+            is_active,
+        }
+    }
+
+    fn withdraw(&mut self, amount: f64) -> Option<f64> {
+        if self.is_active && self.balance >= amount {
+            self.balance -= amount;
+            Some(amount)
+        } else {
+            None
+        }
+    }
+}
+
 fn get_user_input(prompt: &str) -> String {
     print!("{}", prompt);
     io::stdout().flush().unwrap();
@@ -17,41 +36,11 @@ fn get_user_input(prompt: &str) -> String {
     input.trim().to_string()
 }
 
-fn withdraw(account: &mut Account, amount: f64) -> Option<f64> {
-    if account.is_active && account.balance >= amount {
-        account.balance -= amount;
-        Some(amount)
-    } else {
-        None
-    }
-}
-
 fn main() {
     let mut accounts = HashMap::new();
-    accounts.insert(
-        1,
-        Account {
-            id: 1,
-            balance: 100.0,
-            is_active: true,
-        },
-    );
-    accounts.insert(
-        2,
-        Account {
-            id: 2,
-            balance: 50.0,
-            is_active: false,
-        },
-    );
-    accounts.insert(
-        3,
-        Account {
-            id: 3,
-            balance: 200.0,
-            is_active: true,
-        },
-    );
+    accounts.insert(1, Account::new(1, 100.0, true));
+    accounts.insert(2, Account::new(2, 50.0, false));
+    accounts.insert(3, Account::new(3, 200.0, true));
 
     println!("Enter withdrawal requests (account_id amount), or 'done' to finish:");
 
@@ -74,7 +63,7 @@ fn main() {
 
         let withdrawal = accounts
             .get_mut(&account_id)
-            .and_then(|account| withdraw(account, amount));
+            .and_then(|account| account.withdraw(amount));
 
         if let Some(amount) = withdrawal {
             successful_withdrawals.push((account_id, amount));

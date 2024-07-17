@@ -1,29 +1,31 @@
 use std::io::{self, Write};
 
-// Define a struct to represent an item
+use dialoguer::{theme::ColorfulTheme, Input};
+
 struct Item {
     name: String,
     price: Option<f64>,
 }
 
 impl Item {
-    // Function to create a new item
     fn new(name: String, price: Option<f64>) -> Self {
         Self { name, price }
     }
 
-    // Function to display item details
     fn display(&self) {
         print!("{}: ", self.name);
+        io::stdout().flush().unwrap();
+
         match self.price {
-            Some(price) => println!("${:.2}", price),
+            Some(price) => println!("{:.2}", price),
             None => println!("Price not set"),
         }
     }
 
-    // Function to apply a discount if the item has a price
     fn apply_discount(&mut self, discount: f64) {
-        self.price = self.price.map_or(None, |p| Some(p * (1.0 - discount)));
+        self.price = self
+            .price
+            .map_or(None, |price| Some(price * (1.0 - discount)));
     }
 }
 
@@ -31,47 +33,35 @@ fn main() {
     let mut inventory = Vec::new();
 
     loop {
-        println!("\nEnter item details (or press Enter to finish):");
+        let name: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Item name: ")
+            .interact_text()
+            .unwrap();
 
-        print!("Item name: ");
-        io::stdout().flush().unwrap();
-        let mut name = String::new();
-        io::stdin().read_line(&mut name).unwrap();
-        let name = name.trim();
-
-        if name.is_empty() {
+        if name.to_lowercase() == "done" {
             break;
         }
 
-        print!("Item price (leave blank if not set): ");
-        io::stdout().flush().unwrap();
-        let mut price_str = String::new();
-        io::stdin().read_line(&mut price_str).unwrap();
-        let price_str = price_str.trim();
+        let price: f64 = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Price: ")
+            .interact_text()
+            .unwrap();
 
-        let price = if price_str.is_empty() {
-            None
-        } else {
-            match price_str.parse::<f64>() {
-                Ok(p) => Some(p),
-                Err(_) => {
-                    println!("Invalid price. Setting price to None.");
-                    None
-                }
-            }
-        };
-
-        inventory.push(Item::new(name.to_string(), price));
+        inventory.push(Item::new(name.to_string(), Some(price)));
     }
 
-    println!("\nInitial Inventory:");
-    inventory.iter().for_each(|item| item.display());
+    println!("Initial Inventory: ");
+    for item in &inventory {
+        item.display()
+    }
 
-    println!("\nApplying 20% discount:");
-    inventory
-        .iter_mut()
-        .for_each(|item| item.apply_discount(0.2));
+    println!("20% discount !");
+    for item in &mut inventory {
+        item.apply_discount(0.2)
+    }
 
-    println!("\nUpdated Inventory:");
-    inventory.iter().for_each(|item| item.display());
+    println!("After discount: ");
+    for item in &inventory {
+        item.display()
+    }
 }
