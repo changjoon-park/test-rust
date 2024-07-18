@@ -1,67 +1,74 @@
-use std::io::{self, Write};
+use dialoguer::{theme::ColorfulTheme, Input, Select};
 
-use dialoguer::{theme::ColorfulTheme, Input};
-
-struct Item {
-    name: String,
-    price: Option<f64>,
+struct BookDetails {
+    title: String,
+    description: Option<String>,
 }
 
-impl Item {
-    fn new(name: String, price: Option<f64>) -> Self {
-        Self { name, price }
-    }
+enum Book {
+    Fiction(BookDetails),
+    NonFiction(BookDetails),
+}
 
-    fn display(&self) {
-        print!("{}: ", self.name);
-        io::stdout().flush().unwrap();
-
-        match self.price {
-            Some(price) => println!("{:.2}", price),
-            None => println!("Price not set"),
+fn display_book_details(book: &Book) {
+    match book {
+        Book::Fiction(details) => {
+            println!("Fiction Book: {}", details.title);
+            match &details.description {
+                Some(desc) => println!("Description: {}", desc),
+                None => println!("Description: No description available"),
+            }
         }
-    }
-
-    fn apply_discount(&mut self, discount: f64) {
-        self.price = self
-            .price
-            .map_or(None, |price| Some(price * (1.0 - discount)));
+        Book::NonFiction(details) => {
+            println!("Non-Fiction Book: {}", details.title);
+            match &details.description {
+                Some(desc) => println!("Description: {}", desc),
+                None => println!("Description: No description available"),
+            }
+        }
     }
 }
 
 fn main() {
-    let mut inventory = Vec::new();
+    let mut books = Vec::new();
 
     loop {
-        let name: String = Input::with_theme(&ColorfulTheme::default())
-            .with_prompt("Item name: ")
+        let title: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Title: ")
             .interact_text()
             .unwrap();
 
-        if name.to_lowercase() == "done" {
+        if title.to_lowercase() == "q" {
             break;
         }
 
-        let price: f64 = Input::with_theme(&ColorfulTheme::default())
-            .with_prompt("Price: ")
+        let description: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Description: ")
             .interact_text()
             .unwrap();
 
-        inventory.push(Item::new(name.to_string(), Some(price)));
+        let items = &["Fiction", "NonFiction"];
+
+        let selection: usize = Select::with_theme(&ColorfulTheme::default())
+            .with_prompt("Select Category: ")
+            .default(0)
+            .items(&items[..])
+            .interact()
+            .unwrap();
+
+        let details = BookDetails {
+            title,
+            description: Some(description),
+        };
+
+        if items[selection] == "Fiction" {
+            books.push(Book::Fiction(details));
+        } else {
+            books.push(Book::NonFiction(details));
+        }
     }
 
-    println!("Initial Inventory: ");
-    for item in &inventory {
-        item.display()
-    }
-
-    println!("20% discount !");
-    for item in &mut inventory {
-        item.apply_discount(0.2)
-    }
-
-    println!("After discount: ");
-    for item in &inventory {
-        item.display()
+    for book in &books {
+        display_book_details(book);
     }
 }
