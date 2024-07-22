@@ -5,6 +5,11 @@ enum Book {
     NonFiction(BookDetail),
 }
 
+enum IpAddr {
+    V4(String),
+    V6(String),
+}
+
 impl Book {
     fn display_detail(&self) {
         match self {

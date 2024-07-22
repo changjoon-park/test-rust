@@ -1,64 +1,27 @@
-enum PersonType {
-    Adult(Person),
-    Child(Person),
-}
+use std::mem::size_of_val;
 
-struct Person {
-    name: String,
-    age: u32,
-}
-
-impl Person {
-    fn new(name: String, age: u32) -> PersonType {
-        if age >= 18 {
-            PersonType::Adult(Self { name, age })
-        } else {
-            PersonType::Child(Self { name, age })
-        }
-    }
-
-    fn give_birth(&self, name: String) -> PersonType {
-        PersonType::Child(Self { name, age: 0 })
-    }
-
-    fn celebrate_birth(&mut self) {
-        self.age += 1;
-    }
-}
-
-fn parse_age(age_str: &str) -> Result<u32, String> {
-    age_str
-        .parse::<u32>()
-        .map_err(|_| "Invalid Input".to_string())
+struct Book {
+    id: u32,
+    title: String,
+    authors: Vec<String>,
 }
 
 fn main() {
-    let name = "Alice";
-    let age_str = "25";
-    let parent = parse_age(age_str).map(|age| Person::new(name.to_string(), age));
+    let book1 = Book {
+        id: 1,
+        title: "Short Title".to_string(),
+        authors: vec!["Author 1".to_string()],
+    };
 
-    match &parent {
-        Ok(PersonType::Adult(person)) => {
-            println!("{} is an adult, {} years old", person.name, person.age);
-        }
-        Ok(PersonType::Child(person)) => {
-            println!("{} is a child, {} years old", person.name, person.age);
-        }
-        Err(e) => println!("Err: {}", e),
-    }
+    let book2 = Book {
+        id: 2,
+        title: "A Much Longer Title That Takes More Space".to_string(),
+        authors: vec![
+            "Author 1".to_string(),
+            "Author 2".to_string(),
+            "Author 3".to_string(),
+        ],
+    };
 
-    let child = parent.and_then(|person_type| match person_type {
-        PersonType::Adult(person) => Ok(person.give_birth("Bob".to_string())),
-        PersonType::Child(_) => Err("Children cannot give birth".to_string()),
-    });
-
-    match &child {
-        Ok(PersonType::Adult(person)) => {
-            println!("{} is an adult, {} years old", person.name, person.age);
-        }
-        Ok(PersonType::Child(person)) => {
-            println!("{} is a child, {} years old", person.name, person.age);
-        }
-        Err(e) => println!("Err: {}", e),
-    }
+    assert_eq!(std::mem::size_of_val(&book1), std::mem::size_of_val(&book2));
 }
