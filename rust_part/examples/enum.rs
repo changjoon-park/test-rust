@@ -1,32 +1,34 @@
 use dialoguer::{theme::ColorfulTheme, Input, Select};
 
-struct BookDetails {
-    title: String,
-    description: Option<String>,
-}
-
 enum Book {
-    Fiction(BookDetails),
-    NonFiction(BookDetails),
+    Fiction(BookDetail),
+    NonFiction(BookDetail),
 }
 
-fn display_book_details(book: &Book) {
-    match book {
-        Book::Fiction(details) => {
-            println!("Fiction Book: {}", details.title);
-            match &details.description {
-                Some(desc) => println!("Description: {}", desc),
-                None => println!("Description: No description available"),
+impl Book {
+    fn display_detail(&self) {
+        match self {
+            Book::Fiction(detail) => {
+                println!("Fiction Book: {}", detail.title);
+                match &detail.description {
+                    Some(desc) => println!("Description: {}", desc),
+                    None => println!("No Description"),
+                }
             }
-        }
-        Book::NonFiction(details) => {
-            println!("Non-Fiction Book: {}", details.title);
-            match &details.description {
-                Some(desc) => println!("Description: {}", desc),
-                None => println!("Description: No description available"),
+            Book::NonFiction(detail) => {
+                println!("Non-Fiction Book: {}", detail.title);
+                match &detail.description {
+                    Some(desc) => println!("Description: {}", desc),
+                    None => println!("No Description"),
+                }
             }
         }
     }
+}
+
+struct BookDetail {
+    title: String,
+    description: Option<String>,
 }
 
 fn main() {
@@ -47,28 +49,28 @@ fn main() {
             .interact_text()
             .unwrap();
 
+        let book_detail = BookDetail {
+            title,
+            description: Some(description),
+        };
+
         let items = &["Fiction", "NonFiction"];
 
         let selection: usize = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Select Category: ")
+            .with_prompt("Select Category")
             .default(0)
             .items(&items[..])
             .interact()
             .unwrap();
 
-        let details = BookDetails {
-            title,
-            description: Some(description),
-        };
-
         if items[selection] == "Fiction" {
-            books.push(Book::Fiction(details));
-        } else {
-            books.push(Book::NonFiction(details));
+            books.push(Book::Fiction(book_detail));
+        } else if items[selection] == "NonFiction" {
+            books.push(Book::NonFiction(book_detail));
         }
     }
 
     for book in &books {
-        display_book_details(book);
+        book.display_detail();
     }
 }

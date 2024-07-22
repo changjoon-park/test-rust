@@ -1,97 +1,103 @@
+enum PersonType {
+    Adult(Person),
+    Child(Person),
+}
+
 struct Person {
     name: String,
     age: u32,
 }
 
 impl Person {
-    fn new(name: String, age: u32) -> Self {
-        Person { name, age }
-    }
-
-    fn double_age(self) -> Self {
-        Person {
-            name: self.name,
-            age: self.age * 2,
+    fn new(name: String, age: u32) -> PersonType {
+        if age >= 18 {
+            PersonType::Adult(Self { name, age })
+        } else {
+            PersonType::Child(Self { name, age })
         }
     }
 
-    fn celebrate_birthday(self) -> Self {
-        Person {
-            name: self.name,
-            age: self.age + 1,
-        }
+    fn give_birth(&self, name: String) -> PersonType {
+        PersonType::Child(Self { name, age: 0 })
+    }
+
+    fn celebrate_birth(&mut self) {
+        self.age += 1;
     }
 }
 
 fn parse_age(age_str: &str) -> Result<u32, String> {
-    age_str.parse().map_err(|_| "Invalid age".to_string())
+    age_str
+        .parse::<u32>()
+        .map_err(|_| "Invalid Input".to_string())
 }
 
-fn find_person(id: u32) -> Option<Person> {
-    if id == 1 {
-        Some(Person::new("Alice".to_string(), 30))
-    } else {
-        None
+// New utility function that takes PersonType parameters
+fn describe_relationship(parent: &PersonType, child: &PersonType) -> String {
+    match (parent, child) {
+        (PersonType::Adult(p), PersonType::Child(c)) => {
+            format!(
+                "{} (age {}) is the parent of {} (age {})",
+                p.name, p.age, c.name, c.age
+            )
+        }
+        (PersonType::Child(_), PersonType::Child(c)) => {
+            format!(
+                "Error: {} (age {}) cannot be a parent as they are a child",
+                c.name, c.age
+            )
+        }
+        (PersonType::Adult(p), PersonType::Adult(c)) => {
+            format!(
+                "{} (age {}) and {} (age {}) are both adults",
+                p.name, p.age, c.name, c.age
+            )
+        }
+        (PersonType::Child(p), PersonType::Adult(c)) => {
+            format!(
+                "Error: {} (age {}) cannot be the parent of {} (age {})",
+                p.name, p.age, c.name, c.age
+            )
+        }
     }
 }
 
 fn main() {
-    // Result::map() examples
-    println!("- Result::map() examples:");
+    let name = "Alice";
+    let age_str = "25";
+    let parent = parse_age(age_str).map(|age| Person::new(name.to_string(), age));
 
-    // Using map with a method name
-    let person_result = parse_age("30")
-        .map(|age| Person::new("Bob".to_string(), age))
-        .map(Person::double_age);
-
-    match person_result {
-        Ok(person) => println!(
-            "Person with doubled age: {} is {} years old",
-            person.name, person.age
-        ),
-        Err(e) => println!("Error: {}", e),
+    match &parent {
+        Ok(person_type) => match person_type {
+            PersonType::Adult(person) => {
+                println!("{} is an adult, {} years old", person.name, person.age)
+            }
+            PersonType::Child(person) => {
+                println!("{} is a child, {} years old", person.name, person.age)
+            }
+        },
+        Err(e) => println!("Err: {}", e),
     }
 
-    // Using map with a closure
-    let person_result = parse_age("25")
-        .map(|age| Person::new("Charlie".to_string(), age))
-        .map(|p| p.celebrate_birthday());
+    let child = parent.and_then(|person_type| match person_type {
+        PersonType::Adult(person) => Ok(person.give_birth("Bob".to_string())),
+        PersonType::Child(_) => Err("Children cannot give birth".to_string()),
+    });
 
-    match person_result {
-        Ok(person) => println!(
-            "Person after birthday: {} is {} years old",
-            person.name, person.age
-        ),
-        Err(e) => println!("Error: {}", e),
+    match &child {
+        Ok(person_type) => match person_type {
+            PersonType::Adult(person) => {
+                println!("{} is an adult, {} years old", person.name, person.age)
+            }
+            PersonType::Child(person) => {
+                println!("{} is a child, {} years old", person.name, person.age)
+            }
+        },
+        Err(e) => println!("Err: {}", e),
     }
 
-    // Option::map() examples
-    println!("\n- Option::map() examples:");
-
-    // Using map with a method name
-    let doubled_age_person = find_person(1).map(Person::double_age);
-
-    match doubled_age_person {
-        Some(person) => println!(
-            "Person with doubled age: {} is {} years old",
-            person.name, person.age
-        ),
-        None => println!("Person not found"),
-    }
-
-    // Using map with a closure
-    let older_person = find_person(1).map(|p| Person::new(p.name, p.age + 5));
-
-    match older_person {
-        Some(person) => println!("Older person: {} is {} years old", person.name, person.age),
-        None => println!("Person not found"),
-    }
-
-    // Demonstrating map on None
-    let not_found = find_person(2).map(Person::double_age);
-
-    match not_found {
-        Some(_) => println!("This won't be printed"),
-        None => println!("Person not found, map wasn't called"),
+    // Using the new utility function
+    if let (Ok(parent_type), Ok(child_type)) = (&parent, &child) {
+        println!("{}", describe_relationship(parent_type, child_type));
     }
 }

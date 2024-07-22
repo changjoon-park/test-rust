@@ -1,74 +1,64 @@
-use dialoguer::{theme::ColorfulTheme, Input, Select};
-
-struct BookDetails {
-    title: String,
-    description: Option<String>,
+enum PersonType {
+    Adult(Person),
+    Child(Person),
 }
 
-enum Book {
-    Fiction(BookDetails),
-    NonFiction(BookDetails),
+struct Person {
+    name: String,
+    age: u32,
 }
 
-fn display_book_details(book: &Book) {
-    match book {
-        Book::Fiction(details) => {
-            println!("Fiction Book: {}", details.title);
-            match &details.description {
-                Some(desc) => println!("Description: {}", desc),
-                None => println!("Description: No description available"),
-            }
-        }
-        Book::NonFiction(details) => {
-            println!("Non-Fiction Book: {}", details.title);
-            match &details.description {
-                Some(desc) => println!("Description: {}", desc),
-                None => println!("Description: No description available"),
-            }
+impl Person {
+    fn new(name: String, age: u32) -> PersonType {
+        if age >= 18 {
+            PersonType::Adult(Self { name, age })
+        } else {
+            PersonType::Child(Self { name, age })
         }
     }
+
+    fn give_birth(&self, name: String) -> PersonType {
+        PersonType::Child(Self { name, age: 0 })
+    }
+
+    fn celebrate_birth(&mut self) {
+        self.age += 1;
+    }
+}
+
+fn parse_age(age_str: &str) -> Result<u32, String> {
+    age_str
+        .parse::<u32>()
+        .map_err(|_| "Invalid Input".to_string())
 }
 
 fn main() {
-    let mut books = Vec::new();
+    let name = "Alice";
+    let age_str = "25";
+    let parent = parse_age(age_str).map(|age| Person::new(name.to_string(), age));
 
-    loop {
-        let title: String = Input::with_theme(&ColorfulTheme::default())
-            .with_prompt("Title: ")
-            .interact_text()
-            .unwrap();
-
-        if title.to_lowercase() == "q" {
-            break;
+    match &parent {
+        Ok(PersonType::Adult(person)) => {
+            println!("{} is an adult, {} years old", person.name, person.age);
         }
-
-        let description: String = Input::with_theme(&ColorfulTheme::default())
-            .with_prompt("Description: ")
-            .interact_text()
-            .unwrap();
-
-        let items = &["Fiction", "NonFiction"];
-
-        let selection: usize = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Select Category: ")
-            .default(0)
-            .items(&items[..])
-            .interact()
-            .unwrap();
-
-        let details = BookDetails {
-            title,
-            description: Some(description),
-        };
-
-        if items[selection] == "Fiction" {
-            books.push(Book::Fiction(details));
-        } else {
-            books.push(Book::NonFiction(details));
+        Ok(PersonType::Child(person)) => {
+            println!("{} is a child, {} years old", person.name, person.age);
         }
+        Err(e) => println!("Err: {}", e),
     }
 
-    for book in &books {
-        display_book_details(book);
+    let child = parent.and_then(|person_type| match person_type {
+        PersonType::Adult(person) => Ok(person.give_birth("Bob".to_string())),
+        PersonType::Child(_) => Err("Children cannot give birth".to_string()),
+    });
+
+    match &child {
+        Ok(PersonType::Adult(person)) => {
+            println!("{} is an adult, {} years old", person.name, person.age);
+        }
+        Ok(PersonType::Child(person)) => {
+            println!("{} is a child, {} years old", person.name, person.age);
+        }
+        Err(e) => println!("Err: {}", e),
     }
 }
