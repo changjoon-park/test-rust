@@ -1,27 +1,71 @@
-use std::mem::size_of_val;
+use std::{
+    io::{self, Write},
+    rc::{self, Rc},
+    sync::Arc,
+};
 
-struct Book {
-    id: u32,
-    title: String,
-    authors: Vec<String>,
+use dialoguer::{theme::ColorfulTheme, Input};
+
+struct Item {
+    name: String,
+    price: Option<f64>,
+}
+
+impl Item {
+    fn new(name: String, price: Option<f64>) -> Self {
+        Self { name, price }
+    }
+
+    fn display(&self) {
+        print!("{}: ", self.name);
+        io::stdout().flush().unwrap();
+
+        match self.price {
+            Some(price) => println!("{:.2}", price),
+            None => println!("Price not set"),
+        }
+    }
+
+    fn apply_discount(&mut self, discount: f64) {
+        self.price = self
+            .price
+            .map_or(None, |price| Some(price * (1.0 - discount)));
+    }
 }
 
 fn main() {
-    let book1 = Book {
-        id: 1,
-        title: "Short Title".to_string(),
-        authors: vec!["Author 1".to_string()],
-    };
+    let mut inventory = Vec::new();
 
-    let book2 = Book {
-        id: 2,
-        title: "A Much Longer Title That Takes More Space".to_string(),
-        authors: vec![
-            "Author 1".to_string(),
-            "Author 2".to_string(),
-            "Author 3".to_string(),
-        ],
-    };
+    loop {
+        let name: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Item name: ")
+            .interact_text()
+            .unwrap();
 
-    assert_eq!(std::mem::size_of_val(&book1), std::mem::size_of_val(&book2));
+        if name.to_lowercase() == "done" {
+            break;
+        }
+
+        let price: f64 = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Price: ")
+            .interact_text()
+            .unwrap();
+
+        inventory.push(Item::new(name.to_string(), Some(price)));
+    }
+
+    println!("Initial Inventory: ");
+    for item in &inventory {
+        item.display()
+    }
+
+    println!("20% discount !");
+    for item in &mut inventory {
+        item.apply_discount(0.2)
+    }
+
+    println!("After discount: ");
+    for item in &inventory {
+        item.display()
+    }
 }
