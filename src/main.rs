@@ -1,19 +1,19 @@
-use winreg::enums::*;
-use winreg::RegKey;
+use tokio::sync::mpsc;
 
-fn main() -> std::io::Result<()> {
-    // 1. 레지스트리 키 열기
-    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    let cur_ver = hklm.open_subkey("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion")?;
+#[tokio::main]
+async fn main() {
+    // 채널 생성
+    let (tx, mut rx) = mpsc::channel(32);
     
-    // 2. 값 읽기
-    let product_name: String = cur_ver.get_value("ProductName")?;
-    let build: String = cur_ver.get_value("CurrentBuildNumber")?;
-    let ubr: u32 = cur_ver.get_value("UBR")?;  // Update Build Revision
+    // 송신 태스크
+    tokio::spawn(async move {
+        tx.send("Hello").await.unwrap();
+        tx.send("from").await.unwrap();
+        tx.send("Tokio!").await.unwrap();
+    });
     
-    // 3. 출력
-    println!("OS: {}", product_name);
-    println!("Build: {}.{}", build, ubr);
-    
-    Ok(())
+    // 수신
+    while let Some(msg) = rx.recv().await {
+        println!("받음: {}", msg);
+    }
 }
