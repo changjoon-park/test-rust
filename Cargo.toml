@@ -1,0 +1,8 @@
+[package]
+name = "test-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+windows = "0.61.1"
+winreg = "0.55.0"
