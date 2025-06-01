@@ -1,5 +1,5 @@
-use winreg::prelude::*;
 use winreg::enums::*;
+use winreg::RegKey;
 
 fn main() -> std::io::Result<()> {
     // 1. 레지스트리 키 열기
