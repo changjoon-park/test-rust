@@ -2,7 +2,6 @@
 use crate::models::{CheckResult, CheckStatus, Importance};
 use std::process::Command;
 use std::fs;
-use std::path::Path;
 
 /// PC-01: Check password expiration policy
 pub fn check_password_expiration() -> Result<CheckResult, Box<dyn std::error::Error>> {
