@@ -7,7 +7,7 @@ use serde::Deserialize;
 pub fn check_ntfs_filesystem() -> Result<CheckResult, Box<dyn std::error::Error>> {
     let wmi_client = WMIClient::new()?;
     
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(Deserialize)]
     struct Win32_LogicalDisk {
         DeviceID: String,
@@ -100,7 +100,7 @@ pub fn check_multiboot_config() -> Result<CheckResult, Box<dyn std::error::Error
 pub fn check_unnecessary_services() -> Result<CheckResult, Box<dyn std::error::Error>> {
     let wmi_client = WMIClient::new()?;
     
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(Deserialize)]
     struct Win32_Service {
         Name: String,
