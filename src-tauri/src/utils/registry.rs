@@ -1,5 +1,6 @@
 // src/utils/registry.rs
-use winreg::{enums::*, RegKey};
+use winreg::RegKey;
+use winreg::enums::HKEY;
 use std::error::Error;
 use std::fmt;
 

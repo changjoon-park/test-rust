@@ -57,7 +57,7 @@ pub struct SecurityReport {
 impl SecurityReport {
     pub fn new(results: Vec<CheckResult>) -> Self {
         Self {
-            computer_name: whoami::hostname(),
+            computer_name: whoami::fallible::hostname().unwrap_or_else(|_| "Unknown".to_string()),
             date_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
             os: std::env::consts::OS.to_string(),
             version: "1.0.0".to_string(),

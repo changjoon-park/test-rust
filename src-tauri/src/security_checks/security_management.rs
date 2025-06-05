@@ -1,7 +1,7 @@
-// security_checks/security_management.rs
+// src/security_checks/security_management.rs
 use crate::models::{CheckResult, CheckStatus, Importance};
 use crate::utils::registry::RegistryReader;
-use winreg::enums::*;
+use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
 
 /// PC-12: Screen saver with password protection
 pub fn check_screen_saver_settings() -> Result<CheckResult, Box<dyn std::error::Error>> {
