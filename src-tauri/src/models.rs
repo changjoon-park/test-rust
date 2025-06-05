@@ -1,42 +1,67 @@
-// lib.rs
-use crate::models::SecurityReport;
+// src/models.rs
+use serde::{Serialize, Deserialize};
+use chrono::Local;
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CheckStatus {
+    #[serde(rename = "양호")]
+    Good,
+    #[serde(rename = "취약")]
+    Vulnerable,
+    #[serde(rename = "점검 실패")]
+    CheckFailed,
+    #[serde(rename = "수동 점검")]
+    ManualCheck,
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Importance {
+    #[serde(rename = "상")]
+    High,
+    #[serde(rename = "중")]
+    Medium,
+    #[serde(rename = "하")]
+    Low,
 }
 
-pub async fn run_all_security_checks() -> Result<SecurityReport, Box<dyn std::error::Error>> {
-    let mut results = Vec::new();
-    
-    // Registry-based checks (fast, no admin required)
-    let registry_checks = vec![
-        security_checks::security_management::check_screen_saver_settings(),
-        security_checks::security_management::check_autorun_settings(),
-        security_checks::security_management::check_browser_temp_files_settings(),
-        security_checks::security_management::check_remote_access_settings(),
-    ];
-    
-    for check in registry_checks {
-        match check {
-            Ok(result) => results.push(result),
-            Err(e) => eprintln!("Check failed: {}", e),
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckResult {
+    #[serde(rename = "분류")]
+    pub category: String,
+    #[serde(rename = "항목코드")]
+    pub code: String,
+    #[serde(rename = "점검항목")]
+    pub item: String,
+    #[serde(rename = "중요도")]
+    pub importance: Importance,
+    #[serde(rename = "점검결과")]
+    pub status: CheckStatus,
+    #[serde(rename = "점검내용")]
+    pub detail: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SecurityReport {
+    #[serde(rename = "ComputerName")]
+    pub computer_name: String,
+    #[serde(rename = "DateTime")]
+    pub date_time: String,
+    #[serde(rename = "OS")]
+    pub os: String,
+    #[serde(rename = "Version")]
+    pub version: String,
+    #[serde(rename = "Results")]
+    pub results: Vec<CheckResult>,
+}
+
+impl SecurityReport {
+    pub fn new(results: Vec<CheckResult>) -> Self {
+        Self {
+            computer_name: whoami::hostname(),
+            date_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+            os: std::env::consts::OS.to_string(),
+            version: "1.0.0".to_string(),
+            results,
         }
     }
-    
-    // TODO: Add WMI-based checks
-    // TODO: Add admin-required checks
-    
-    Ok(SecurityReport::new(results))
 }
-

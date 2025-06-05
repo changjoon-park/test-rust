@@ -4,8 +4,8 @@ mod utils;
 mod security_checks;
 
 use crate::models::{SecurityReport, CheckResult};
-use serde::{Deserialize, Serialize};
-use tauri::Manager;
+use serde::Serialize;
+use tauri::Emitter; // Add this import for emit functionality
 
 #[derive(Clone, Serialize)]
 struct ProgressPayload {
@@ -34,7 +34,7 @@ pub async fn run_all_security_checks_with_progress(
     let mut results = Vec::new();
     
     // Define all checks with their descriptions
-    let checks: Vec<(&str, Box<dyn Fn() -> Result<CheckResult, Box<dyn std::error::Error>>>)> = vec![
+    let checks: Vec<(&str, Box<dyn Fn() -> Result<CheckResult, Box<dyn std::error::Error>> + Send>)> = vec![
         ("화면보호기 설정 점검 중...", Box::new(|| security_checks::check_screen_saver_settings())),
         ("자동실행 설정 점검 중...", Box::new(|| security_checks::check_autorun_settings())),
         ("브라우저 임시파일 설정 점검 중...", Box::new(|| security_checks::check_browser_temp_files_settings())),
@@ -74,9 +74,6 @@ pub async fn run_all_security_checks_with_progress(
             }
         }
     }
-    
-    // TODO: Add WMI-based checks
-    // TODO: Add admin-required checks
     
     Ok(SecurityReport::new(results))
 }
