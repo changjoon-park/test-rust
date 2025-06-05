@@ -2,12 +2,12 @@
 use crate::models::{CheckResult, CheckStatus, Importance};
 use crate::utils::wmi::WMIClient;
 use serde::Deserialize;
-use std::collections::HashMap;
 
 /// PC-16: Check if all fixed drives use NTFS
 pub fn check_ntfs_filesystem() -> Result<CheckResult, Box<dyn std::error::Error>> {
     let wmi_client = WMIClient::new()?;
     
+    #[allow(non_snake_case)]
     #[derive(Deserialize)]
     struct Win32_LogicalDisk {
         DeviceID: String,
@@ -100,6 +100,7 @@ pub fn check_multiboot_config() -> Result<CheckResult, Box<dyn std::error::Error
 pub fn check_unnecessary_services() -> Result<CheckResult, Box<dyn std::error::Error>> {
     let wmi_client = WMIClient::new()?;
     
+    #[allow(non_snake_case)]
     #[derive(Deserialize)]
     struct Win32_Service {
         Name: String,
