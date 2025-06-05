@@ -46,6 +46,11 @@ pub async fn run_all_security_checks_with_progress(
         ("멀티부팅 설정 점검 중...", Box::new(|| security_checks::check_multiboot_config())),
         ("불필요한 서비스 점검 중...", Box::new(|| security_checks::check_unnecessary_services())),
         ("방화벽 상태 점검 중...", Box::new(|| security_checks::check_firewall_status())),
+
+        // Account management checks
+        ("패스워드 만료 정책 점검 중...", Box::new(|| security_checks::check_password_expiration())),
+        ("패스워드 복잡성 정책 점검 중...", Box::new(|| security_checks::check_password_policy())),
+        ("복구 콘솔 설정 점검 중...", Box::new(|| security_checks::check_recovery_console_settings())),
     ];
     
     let total_checks = checks.len();

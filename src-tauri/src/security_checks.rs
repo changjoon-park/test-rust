@@ -18,3 +18,9 @@ pub use service_management::{
     check_unnecessary_services,
     check_firewall_status,
 };
+
+pub use account_management::{
+    check_password_expiration,
+    check_password_policy,
+    check_recovery_console_settings,
+};
