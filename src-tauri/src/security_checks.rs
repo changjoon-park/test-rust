@@ -11,3 +11,10 @@ pub use security_management::{
     check_browser_temp_files_settings,
     check_remote_access_settings,
 };
+
+pub use service_management::{
+    check_ntfs_filesystem,
+    check_multiboot_config,
+    check_unnecessary_services,
+    check_firewall_status,
+};

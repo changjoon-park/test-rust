@@ -35,10 +35,17 @@ pub async fn run_all_security_checks_with_progress(
     
     // Define all checks with their descriptions
     let checks: Vec<(&str, Box<dyn Fn() -> Result<CheckResult, Box<dyn std::error::Error>> + Send>)> = vec![
+        // Registry-based checks
         ("화면보호기 설정 점검 중...", Box::new(|| security_checks::check_screen_saver_settings())),
         ("자동실행 설정 점검 중...", Box::new(|| security_checks::check_autorun_settings())),
         ("브라우저 임시파일 설정 점검 중...", Box::new(|| security_checks::check_browser_temp_files_settings())),
         ("원격 접속 설정 점검 중...", Box::new(|| security_checks::check_remote_access_settings())),
+        
+        // WMI/System checks
+        ("파일 시스템 점검 중...", Box::new(|| security_checks::check_ntfs_filesystem())),
+        ("멀티부팅 설정 점검 중...", Box::new(|| security_checks::check_multiboot_config())),
+        ("불필요한 서비스 점검 중...", Box::new(|| security_checks::check_unnecessary_services())),
+        ("방화벽 상태 점검 중...", Box::new(|| security_checks::check_firewall_status())),
     ];
     
     let total_checks = checks.len();
