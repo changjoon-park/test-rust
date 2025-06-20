@@ -15,7 +15,17 @@ import { Progress } from "@/components/ui/progress";
 import { useTauriInvoke } from "@/hooks/useTauriInvoke";
 import { useTauriInvokeWithProgress } from "@/hooks/useTauriInvokeWithProgress";
 import { useModalRouter } from "@/hooks/useModalRouter";
-import { Clock, Zap, Shield, Rocket, Activity, Layers } from "lucide-react";
+import {
+  Clock,
+  Zap,
+  Shield,
+  Rocket,
+  Activity,
+  Layers,
+  LogOut,
+} from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
+import { useState } from "react";
 
 export function WelcomeContent() {
   const { data: greeting, isLoading, execute: greet } = useTauriInvoke("greet");
@@ -29,6 +39,17 @@ export function WelcomeContent() {
   } = useTauriInvokeWithProgress("analyze_system");
 
   const { openModal, navigateToModal } = useModalRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await invoke("switch_to_login_window");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setIsLoggingOut(false);
+    }
+  };
 
   const features = [
     {
@@ -50,6 +71,25 @@ export function WelcomeContent() {
 
   return (
     <>
+      {/* Header with Logout button */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-2xl font-semibold">Dashboard</h2>
+          <p className="text-muted-foreground">Welcome back to Monori</p>
+        </div>
+        <Button
+          onClick={() => {
+            void handleLogout();
+          }}
+          disabled={isLoggingOut}
+          variant="outline"
+          size="sm"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </Button>
+      </div>
+
       {/* Main Card - existing greet */}
       <Card className="mb-8">
         <CardHeader>
