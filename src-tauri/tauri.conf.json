@@ -1,20 +1,22 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tt1",
+  "productName": "monori",
   "version": "0.1.0",
-  "identifier": "com.tt1.app",
+  "identifier": "com.monori.dev",
   "build": {
     "beforeDevCommand": "pnpm dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:3000",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "tt1",
-        "width": 800,
-        "height": 600
+        "title": "monori",
+        "width": 1000,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
       }
     ],
     "security": {
