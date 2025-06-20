@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, LogIn, AlertCircle } from "lucide-react";
+import { Loader2, LogIn, AlertCircle, User, Key } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -23,38 +23,63 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fillTestCredentials = () => {
+    setEmail("test@example.com");
+    setPassword("password123");
+    setError(null);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     try {
+      // Trim inputs to remove any whitespace
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+
       // Validate inputs
-      if (!email || !password) {
+      if (!trimmedEmail || !trimmedPassword) {
         throw new Error("Please enter both email and password");
       }
 
-      // TODO: Replace with actual authentication logic
-      // For demo purposes, accept any email/password
-      if (email && password) {
-        // Generate a mock token
-        const mockToken = btoa(`${email}:${Date.now()}`);
+      // Debug logging
+      console.log("Attempting login with:", {
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
 
-        // Save session in Tauri
-        await invoke("save_session", { token: mockToken });
+      // Validate credentials with backend
+      const token = await invoke<string>("validate_login", {
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
 
-        // Switch to main window
-        await invoke("switch_to_main_window");
+      console.log("Login successful, token received:", token);
 
-        // No need to redirect - the window will change
-      } else {
-        throw new Error("Invalid credentials");
-      }
+      // Save session in Tauri
+      await invoke("save_session", { token });
+      console.log("Session saved successfully");
+
+      // Switch to main window
+      console.log("Switching to main window...");
+      await invoke("switch_to_main_window");
+      console.log("Switch to main window completed");
+
+      // No need to redirect - the window will change
     } catch (err) {
       console.error("Login failed:", err);
-      setError(
-        err instanceof Error ? err.message : "Login failed. Please try again.",
-      );
+      console.error("Error details:", JSON.stringify(err));
+
+      // Check if it's a Tauri error
+      if (err && typeof err === "object" && "message" in err) {
+        setError(err.message as string);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -114,9 +139,41 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="text-sm text-muted-foreground">
-              <p>Demo mode: Enter any email and password to continue</p>
-            </div>
+            <Card className="bg-muted/50">
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Test Account Credentials
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Email:</span>
+                      <code className="px-2 py-1 bg-background rounded text-xs">
+                        test@example.com
+                      </code>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Password:</span>
+                      <code className="px-2 py-1 bg-background rounded text-xs">
+                        password123
+                      </code>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full mt-3"
+                    onClick={fillTestCredentials}
+                    disabled={isLoading}
+                  >
+                    <Key className="mr-2 h-3 w-3" />
+                    Auto-fill Test Credentials
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </CardContent>
 
           <CardFooter>

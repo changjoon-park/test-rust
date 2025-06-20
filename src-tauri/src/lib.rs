@@ -62,7 +62,9 @@ pub fn run() {
         window_manager::switch_to_login_window,
         window_manager::get_active_window,
         window_manager::check_session,
+        window_manager::validate_login,
         window_manager::save_session,
+        window_manager::get_current_user,
         window_manager::clear_session
     ])
     .setup(|app| {

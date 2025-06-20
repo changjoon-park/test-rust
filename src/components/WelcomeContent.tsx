@@ -25,7 +25,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function WelcomeContent() {
   const { data: greeting, isLoading, execute: greet } = useTauriInvoke("greet");
@@ -40,6 +40,18 @@ export function WelcomeContent() {
 
   const { openModal, navigateToModal } = useModalRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string>("User");
+
+  useEffect(() => {
+    // Fetch current user name on mount
+    invoke<string>("get_current_user")
+      .then((user) => {
+        setCurrentUser(user);
+      })
+      .catch(() => {
+        setCurrentUser("User");
+      });
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -75,7 +87,7 @@ export function WelcomeContent() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-semibold">Dashboard</h2>
-          <p className="text-muted-foreground">Welcome back to Monori</p>
+          <p className="text-muted-foreground">Welcome back, {currentUser}!</p>
         </div>
         <Button
           onClick={() => {

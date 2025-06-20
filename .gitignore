@@ -40,3 +40,4 @@ yarn-error.log*
 
 # tauri session
 /src-tauri/session.token
+session.token
