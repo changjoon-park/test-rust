@@ -63,10 +63,19 @@ pub fn initialize_app_window(app: &AppHandle) -> Result<(), Box<dyn std::error::
 fn create_login_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     println!("create_login_window: Creating login window");
 
-    let window = WebviewWindowBuilder::new(
+    // In development, we need to use the dev server URL
+    let url = if cfg!(debug_assertions) {
+        WebviewUrl::External("http://localhost:3000/login".parse().unwrap())
+    } else {
+        WebviewUrl::App("login".into())
+    };
+
+    println!("create_login_window: Using URL: {:?}", url);
+
+    let _window = WebviewWindowBuilder::new(
         app,
         "login",
-        WebviewUrl::App("login".into())
+        url
     )
     .title("Login - Monori")
     .inner_size(960.0, 600.0)
@@ -85,10 +94,19 @@ fn create_login_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>
 fn create_main_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     println!("create_main_window: Starting window creation");
 
+    // In development, we need to use the dev server URL
+    let url = if cfg!(debug_assertions) {
+        WebviewUrl::External("http://localhost:3000".parse().unwrap())
+    } else {
+        WebviewUrl::App("index.html".into())
+    };
+
+    println!("create_main_window: Using URL: {:?}", url);
+
     let window = WebviewWindowBuilder::new(
         app,
         "main",
-        WebviewUrl::App("".into())  // Empty string for root in Tauri v2
+        url
     )
     .title("Monori")
     .inner_size(1920.0, 1080.0)
@@ -119,47 +137,45 @@ fn create_main_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>>
 pub async fn switch_to_main_window(app: AppHandle) -> Result<(), String> {
     println!("switch_to_main_window called");
 
-    // First, close the login window
-    if let Some(login_window) = app.get_webview_window("login") {
-        println!("Found login window, closing it");
-        login_window.close()
-            .map_err(|e| format!("Failed to close login window: {}", e))?;
-        println!("Login window closed successfully");
-    } else {
-        println!("Warning: Login window not found");
-    }
+    // Store reference to login window (to close it later)
+    let login_window = app.get_webview_window("login");
 
-    // Small delay to ensure clean transition
-    tokio::time::sleep(tokio::time::Duration::from_millis(300)).await;
-
-    println!("Delay completed, proceeding with window creation");
-
-    // Check if main window already exists
-    if let Some(main_window) = app.get_webview_window("main") {
-        println!("Main window already exists, showing it");
-        // If it exists, just show and focus it
-        main_window.show()
-            .map_err(|e| format!("Failed to show main window: {}", e))?;
-        main_window.set_focus()
-            .map_err(|e| format!("Failed to focus main window: {}", e))?;
-        println!("Main window shown and focused");
-    } else {
-        // Create new main window
+    // FIRST: Create main window (while login window still exists)
+    if app.get_webview_window("main").is_none() {
         println!("Creating new main window");
         create_main_window(&app)
             .map_err(|e| format!("Failed to create main window: {}", e))?;
         println!("Main window created successfully");
+
+        // Wait for window to be fully loaded
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
     }
 
-    // Final check - verify main window exists
+    // SECOND: Verify main window exists and show it
     if let Some(main_window) = app.get_webview_window("main") {
-        println!("Final check: Main window exists and is ready");
-        // Ensure it's visible one more time
-        let _ = main_window.show();
-        let _ = main_window.set_focus();
+        println!("Main window exists, showing and focusing");
+        main_window.show()
+            .map_err(|e| format!("Failed to show main window: {}", e))?;
+        main_window.set_focus()
+            .map_err(|e| format!("Failed to focus main window: {}", e))?;
+
+        // Try to maximize again in case it wasn't properly maximized
+        let _ = main_window.maximize();
+        println!("Main window shown, focused, and maximized");
     } else {
-        println!("ERROR: Main window does not exist after creation!");
-        return Err("Main window creation failed".to_string());
+        return Err("Main window does not exist after creation!".to_string());
+    }
+
+    // THIRD: Now close the login window (after main window is ready)
+    if let Some(login) = login_window {
+        println!("Closing login window");
+        // Small delay before closing to ensure smooth transition
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        login.close()
+            .map_err(|e| format!("Failed to close login window: {}", e))?;
+        println!("Login window closed successfully");
+    } else {
+        println!("Warning: Login window not found");
     }
 
     println!("switch_to_main_window completed successfully");
@@ -169,22 +185,51 @@ pub async fn switch_to_main_window(app: AppHandle) -> Result<(), String> {
 /// Switch to login window on logout
 #[tauri::command]
 pub async fn switch_to_login_window(app: AppHandle) -> Result<(), String> {
-    // Clear session first
-    clear_session_internal(&app)?;
+    println!("switch_to_login_window called");
 
-    // Close main window
-    if let Some(main_window) = app.get_webview_window("main") {
-        main_window.close()
-            .map_err(|e| format!("Failed to close main window: {}", e))?;
+    // Store reference to main window (to close it later)
+    let main_window = app.get_webview_window("main");
+
+    // FIRST: Create login window (while main window still exists)
+    if app.get_webview_window("login").is_none() {
+        println!("Creating new login window");
+        create_login_window(&app)
+            .map_err(|e| format!("Failed to create login window: {}", e))?;
+        println!("Login window created successfully");
+
+        // Wait for window to be fully loaded
+        tokio::time::sleep(tokio::time::Duration::from_millis(300)).await;
     }
 
-    // Small delay
-    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+    // SECOND: Verify login window exists and show it
+    if let Some(login_window) = app.get_webview_window("login") {
+        println!("Login window exists, showing and focusing");
+        login_window.show()
+            .map_err(|e| format!("Failed to show login window: {}", e))?;
+        login_window.set_focus()
+            .map_err(|e| format!("Failed to focus login window: {}", e))?;
+        println!("Login window shown and focused");
+    } else {
+        return Err("Login window does not exist after creation!".to_string());
+    }
 
-    // Create login window
-    create_login_window(&app)
-        .map_err(|e| format!("Failed to create login window: {}", e))?;
+    // THIRD: Clear session
+    clear_session_internal(&app)?;
+    println!("Session cleared");
 
+    // FOURTH: Now close the main window (after login window is ready)
+    if let Some(main) = main_window {
+        println!("Closing main window");
+        // Small delay before closing to ensure smooth transition
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        main.close()
+            .map_err(|e| format!("Failed to close main window: {}", e))?;
+        println!("Main window closed successfully");
+    } else {
+        println!("Warning: Main window not found");
+    }
+
+    println!("switch_to_login_window completed successfully");
     Ok(())
 }
 
